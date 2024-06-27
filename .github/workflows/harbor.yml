@@ -1,0 +1,61 @@
+name: Deploy Helm Chart to GKE
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        version: 'latest'
+        install_components: kubectl
+
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Install Helm
+      run: |
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+    - name: Clone Grafana
+      uses: GuillaumeFalourd/clone-github-repo-action@v2.3
+      with:
+        depth: 1
+        branch: 'main'
+        owner: 'techtorialdevops'
+        repository: 'grafanagke'
+    
+    - name: Access cloned repo
+      run: |
+         cd grafanagke
+         ls -la
+
+    - name: Deploy-Dev
+      env:
+        CLOUDSDK_PYTHON: /usr/bin/python3
+      run: |
+        gcloud components update
+        gcloud container clusters get-credentials gke-project-426822-gke --region us-east5 --project gke-project-426822
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm install my-harbor bitnami/harbor -f values.yaml -f dev-values.yaml -n harbor
+    
+    # - name: Deploy-Prod
+    #   env:
+    #     CLOUDSDK_PYTHON: /usr/bin/python3
+    #   run: |
+    #     gcloud components update
+    #     gcloud container clusters get-credentials gke-project-426822-gke-prod --region us-east5 --project gke-project-426822
+    #     helm repo add bitnami https://charts.bitnami.com/bitnami
+    #     helm install my-harbor bitnami/harbor -f values.yaml -f prod-values.yaml -n harbor
+        
