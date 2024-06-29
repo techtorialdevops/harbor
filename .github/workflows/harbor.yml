@@ -46,7 +46,8 @@ jobs:
         CLOUDSDK_PYTHON: /usr/bin/python3
       run: |
         gcloud components update
-        gcloud container clusters get-credentials gke-project-426822-gke --region us-east5 --project gke-project-426822
+        gcloud container clusters get-credentials gke-project-426822-gke --region us-east1 --project gke-project-426822
+        kubectl create ns harbor
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm install my-harbor bitnami/harbor -f values.yaml -f dev-values.yaml -n harbor
     
